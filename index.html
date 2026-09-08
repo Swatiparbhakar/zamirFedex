@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Shipment Details</title>
+<title>Generate FedEx Label</title>
+<script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
 <style>
   :root {
     --ink: #1a2233;
-    --ink-soft: #5b6472;a
+    --ink-soft: #5b6472;
     --line: #dde1e7;
     --line-soft: #eef0f3;
-    --bg: #f6f7f9;
-    --panel: #ffffff;
+    --bg: #ffffff;
     --accent: #4d3df7;
     --accent-soft: #ecebff;
     --error: #c4432b;
-    --radius: 10px;
+    --success: #1a7f4b;
   }
 
   * { box-sizing: border-box; }
@@ -25,37 +25,19 @@
     background: var(--bg);
     color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
-    display: flex;
-    justify-content: center;
-    padding: 48px 20px;
+    padding: 24px 26px;
   }
 
-  .card {
-    width: 100%;
-    max-width: 480px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 32px 28px 28px;
-  }
-
-  .card-header {
-    margin-bottom: 24px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--line-soft);
-  }
-
-  .card-header h1 {
-    font-size: 20px;
+  h1 {
+    font-size: 18px;
     font-weight: 650;
     margin: 0 0 4px;
-    letter-spacing: -0.01em;
   }
 
-  .card-header p {
-    margin: 0;
-    font-size: 13.5px;
+  .subtitle {
+    font-size: 13px;
     color: var(--ink-soft);
+    margin: 0 0 20px;
   }
 
   .order-tag {
@@ -67,41 +49,29 @@
     background: var(--line-soft);
     border-radius: 6px;
     padding: 4px 9px;
-    margin-top: 10px;
+    margin-bottom: 20px;
   }
 
-  .order-tag strong {
-    color: var(--ink);
-    font-weight: 600;
-  }
+  .order-tag strong { color: var(--ink); font-weight: 600; }
 
-  form { display: flex; flex-direction: column; gap: 18px; }
+  form { display: flex; flex-direction: column; gap: 16px; }
 
   .field label {
     display: block;
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 6px;
-    color: var(--ink);
   }
 
-  .field .hint {
-    font-size: 12px;
-    color: var(--ink-soft);
-    font-weight: 400;
-    margin-left: 4px;
-  }
-
-  select, input[type="text"], input[type="number"] {
+  select, input[type="number"] {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--line);
     border-radius: 8px;
     font-size: 14.5px;
     color: var(--ink);
-    background: var(--panel);
+    background: #fff;
     outline: none;
-    transition: border-color 0.15s ease;
     font-family: inherit;
   }
 
@@ -114,22 +84,8 @@
   .weight-row .weight-input { flex: 2; }
   .weight-row .weight-unit { flex: 1; }
 
-  .error-text {
-    font-size: 12px;
-    color: var(--error);
-    margin-top: 5px;
-    display: none;
-  }
-
-  .field.invalid select,
-  .field.invalid input {
-    border-color: var(--error);
-  }
-
-  .field.invalid .error-text { display: block; }
-
   button {
-    margin-top: 6px;
+    margin-top: 4px;
     background: var(--ink);
     color: #fff;
     border: none;
@@ -138,71 +94,45 @@
     font-size: 14.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease;
   }
 
-  button:hover { background: #000; }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  button:hover:not(:disabled) { background: #000; }
 
-  .output {
-    margin-top: 18px;
-    display: none;
-  }
-
-  .output.visible { display: block; }
-
-  .output-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--ink-soft);
-    margin-bottom: 6px;
-  }
-
-  pre {
-    background: #0f1115;
-    color: #d7dae0;
-    font-size: 12.5px;
-    padding: 14px;
+  .message {
+    margin-top: 16px;
+    font-size: 13.5px;
+    padding: 12px 14px;
     border-radius: 8px;
-    overflow-x: auto;
-    margin: 0;
-    line-height: 1.55;
-  }
-
-  .copy-btn {
-    margin-top: 8px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 7px 12px;
-    border-radius: 6px;
-  }
-
-  .copy-btn:hover { background: #e0deff; }
-
-  .status {
-    font-size: 12.5px;
-    margin-top: 10px;
-    color: #1a7f4b;
     display: none;
+    line-height: 1.5;
   }
 
-  .status.visible { display: block; }
+  .message.visible { display: block; }
+  .message.error { background: #fdeceb; color: var(--error); }
+  .message.success { background: #eaf7ef; color: var(--success); }
+
+  .spinner {
+    display: none;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 12px;
+  }
+
+  .spinner.visible { display: block; }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="card-header">
-    <h1>Shipment details</h1>
-    <p>Confirm the FedEx service and package specs for this order.</p>
-    <div class="order-tag" id="orderTag" style="display:none;">
-      Order <strong id="orderIdValue"></strong>
-    </div>
+  <h1>Generate FedEx shipping label</h1>
+  <p class="subtitle">Confirm service and package details, then generate the label and tracking number.</p>
+
+  <div class="order-tag" id="orderTag" style="display:none;">
+    Order <strong id="orderIdValue"></strong>
   </div>
 
   <form id="shipmentForm" novalidate>
-    <div class="field" id="field-service_type">
+    <div class="field">
       <label for="service_type">FedEx service type</label>
       <select id="service_type" required>
         <option value="" disabled selected>Select a service</option>
@@ -217,22 +147,20 @@
         <option value="INTERNATIONAL_ECONOMY">FedEx International Economy</option>
         <option value="INTERNATIONAL_PRIORITY">FedEx International Priority</option>
       </select>
-      <div class="error-text">Choose a service type.</div>
     </div>
 
-    <div class="field" id="field-weight">
-      <label for="weight">Package weight <span class="hint">enter numeric value</span></label>
+    <div class="field">
+      <label for="weight">Package weight</label>
       <div class="weight-row">
-        <input type="number" id="weight" class="weight-input" min="0" step="0.01" placeholder="e.g. 2.5" required />
+        <input type="number" id="weight" class="weight-input" min="0.01" step="0.01" placeholder="e.g. 2.5" required />
         <select id="weight_unit" class="weight-unit" required>
           <option value="LB">lb</option>
           <option value="KG">kg</option>
         </select>
       </div>
-      <div class="error-text">Enter a weight greater than 0.</div>
     </div>
 
-    <div class="field" id="field-package_type">
+    <div class="field">
       <label for="package_type">Packaging type</label>
       <select id="package_type" required>
         <option value="" disabled selected>Select packaging</option>
@@ -245,87 +173,95 @@
         <option value="FEDEX_PAK">FedEx Pak</option>
         <option value="FEDEX_TUBE">FedEx Tube</option>
       </select>
-      <div class="error-text">Choose a packaging type.</div>
     </div>
 
-    <button type="submit">Save shipment details</button>
+    <button type="submit" id="submitBtn">Generate label</button>
+    <div class="spinner" id="spinner">Talking to FedEx&hellip; this can take a few seconds.</div>
   </form>
 
-  <div class="status" id="statusMsg">Saved. Details are ready to send.</div>
-
-  <div class="output" id="output">
-    <div class="output-label">JSON payload</div>
-    <pre id="jsonOutput"></pre>
-    <button type="button" class="copy-btn" id="copyBtn">Copy JSON</button>
-  </div>
-</div>
+  <div class="message" id="resultMessage"></div>
 
 <script>
-  // Pick up order_id from the URL, e.g. widget.html?order_id=1042
-  const params = new URLSearchParams(window.location.search);
-  const orderId = params.get('order_id');
-  if (orderId) {
-    document.getElementById('orderTag').style.display = 'inline-flex';
-    document.getElementById('orderIdValue').textContent = orderId;
-  }
+  let currentOrderId = null;
 
-  const form = document.getElementById('shipmentForm');
-  const output = document.getElementById('output');
-  const jsonOutput = document.getElementById('jsonOutput');
-  const statusMsg = document.getElementById('statusMsg');
-  const copyBtn = document.getElementById('copyBtn');
-
-  function setInvalid(fieldId, invalid) {
-    const el = document.getElementById('field-' + fieldId);
-    if (el) el.classList.toggle('invalid', invalid);
-  }
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    const service_type = document.getElementById('service_type').value;
-    const weight = document.getElementById('weight').value;
-    const weight_unit = document.getElementById('weight_unit').value;
-    const package_type = document.getElementById('package_type').value;
-
-    let valid = true;
-    setInvalid('service_type', !service_type);
-    setInvalid('weight', !(weight && parseFloat(weight) > 0));
-    setInvalid('package_type', !package_type);
-
-    if (!service_type || !(weight && parseFloat(weight) > 0) || !package_type) {
-      valid = false;
-    }
-
-    if (!valid) {
-      statusMsg.classList.remove('visible');
-      output.classList.remove('visible');
-      return;
-    }
-
-    const payload = {
-      order_id: orderId || null,
-      service_type: service_type,
-      weight: parseFloat(weight),
-      weight_unit: weight_unit,
-      package_type: package_type
-    };
-
-    jsonOutput.textContent = JSON.stringify(payload, null, 2);
-    output.classList.add('visible');
-    statusMsg.classList.add('visible');
-
-    // If this widget is embedded in an iframe, notify the parent page.
-    if (window.parent !== window) {
-      window.parent.postMessage({ type: 'shipment_details', payload: payload }, '*');
+  // 1. Initialize the Zoho Widget SDK and read the record we were opened from.
+  ZOHO.embeddedApp.on("PageLoad", function (data) {
+    // data.EntityId is the ID of the record the button was clicked on (the Order).
+    currentOrderId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
+    if (currentOrderId) {
+      document.getElementById("orderTag").style.display = "inline-flex";
+      document.getElementById("orderIdValue").textContent = currentOrderId;
     }
   });
 
-  copyBtn.addEventListener('click', function () {
-    navigator.clipboard.writeText(jsonOutput.textContent).then(function () {
-      copyBtn.textContent = 'Copied';
-      setTimeout(function () { copyBtn.textContent = 'Copy JSON'; }, 1400);
-    });
+  ZOHO.embeddedApp.init();
+
+  const form = document.getElementById("shipmentForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const spinner = document.getElementById("spinner");
+  const resultMessage = document.getElementById("resultMessage");
+
+  function showMessage(text, type) {
+    resultMessage.textContent = text;
+    resultMessage.className = "message visible " + type;
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    if (!currentOrderId) {
+      showMessage("Could not detect the order this widget was opened from. Reopen it from the Order record.", "error");
+      return;
+    }
+
+    const service_type = document.getElementById("service_type").value;
+    const weight = document.getElementById("weight").value;
+    const weight_unit = document.getElementById("weight_unit").value;
+    const package_type = document.getElementById("package_type").value;
+
+    if (!service_type || !weight || parseFloat(weight) <= 0 || !package_type) {
+      showMessage("Please fill in every field with a valid value.", "error");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    spinner.classList.add("visible");
+    resultMessage.classList.remove("visible");
+
+    // 2. Call your Deluge function directly through the SDK.
+    // "GenerateFedexShippingLabel1" must match the function's API name in Zoho.
+    const req = {
+      functionname: "GenerateFedexShippingLabel1",
+      arguments: {
+        order_id: currentOrderId,
+        service_type: service_type,
+        weight: parseFloat(weight),
+        weight_unit: weight_unit,
+        package_type: package_type
+      }
+    };
+
+    ZOHO.CRM.FUNCTIONS.execute(req.functionname, req.arguments)
+      .then(function (response) {
+        submitBtn.disabled = false;
+        spinner.classList.remove("visible");
+
+        // response.details.output holds whatever your Deluge "return" statement sent back.
+        const output = response && response.details ? response.details.output : response;
+
+        if (typeof output === "string" && output.toLowerCase().indexOf("error") !== -1) {
+          showMessage(output, "error");
+        } else if (typeof output === "string" && output.toLowerCase().indexOf("already exist") !== -1) {
+          showMessage(output, "error");
+        } else {
+          showMessage(output || "Label generated.", "success");
+        }
+      })
+      .catch(function (err) {
+        submitBtn.disabled = false;
+        spinner.classList.remove("visible");
+        showMessage("Something went wrong calling the function: " + JSON.stringify(err), "error");
+      });
   });
 </script>
 
