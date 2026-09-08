@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shipment Details</title>
+<style>
+  :root {
+    --ink: #1a2233;
+    --ink-soft: #5b6472;a
+    --line: #dde1e7;
+    --line-soft: #eef0f3;
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --accent: #4d3df7;
+    --accent-soft: #ecebff;
+    --error: #c4432b;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px 28px 28px;
+  }
+
+  .card-header {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .card-header h1 {
+    font-size: 20px;
+    font-weight: 650;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .card-header p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  .order-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    background: var(--line-soft);
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-top: 10px;
+  }
+
+  .order-tag strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  form { display: flex; flex-direction: column; gap: 18px; }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+
+  .field .hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  select, input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14.5px;
+    color: var(--ink);
+    background: var(--panel);
+    outline: none;
+    transition: border-color 0.15s ease;
+    font-family: inherit;
+  }
+
+  select:focus, input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .weight-row { display: flex; gap: 10px; }
+  .weight-row .weight-input { flex: 2; }
+  .weight-row .weight-unit { flex: 1; }
+
+  .error-text {
+    font-size: 12px;
+    color: var(--error);
+    margin-top: 5px;
+    display: none;
+  }
+
+  .field.invalid select,
+  .field.invalid input {
+    border-color: var(--error);
+  }
+
+  .field.invalid .error-text { display: block; }
+
+  button {
+    margin-top: 6px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button:hover { background: #000; }
+
+  .output {
+    margin-top: 18px;
+    display: none;
+  }
+
+  .output.visible { display: block; }
+
+  .output-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  pre {
+    background: #0f1115;
+    color: #d7dae0;
+    font-size: 12.5px;
+    padding: 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .copy-btn {
+    margin-top: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 6px;
+  }
+
+  .copy-btn:hover { background: #e0deff; }
+
+  .status {
+    font-size: 12.5px;
+    margin-top: 10px;
+    color: #1a7f4b;
+    display: none;
+  }
+
+  .status.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <h1>Shipment details</h1>
+    <p>Confirm the FedEx service and package specs for this order.</p>
+    <div class="order-tag" id="orderTag" style="display:none;">
+      Order <strong id="orderIdValue"></strong>
+    </div>
+  </div>
+
+  <form id="shipmentForm" novalidate>
+    <div class="field" id="field-service_type">
+      <label for="service_type">FedEx service type</label>
+      <select id="service_type" required>
+        <option value="" disabled selected>Select a service</option>
+        <option value="FEDEX_GROUND">FedEx Ground</option>
+        <option value="FEDEX_HOME_DELIVERY">FedEx Home Delivery</option>
+        <option value="FEDEX_EXPRESS_SAVER">FedEx Express Saver</option>
+        <option value="FEDEX_2_DAY">FedEx 2Day</option>
+        <option value="FEDEX_2_DAY_AM">FedEx 2Day A.M.</option>
+        <option value="STANDARD_OVERNIGHT">FedEx Standard Overnight</option>
+        <option value="PRIORITY_OVERNIGHT">FedEx Priority Overnight</option>
+        <option value="FIRST_OVERNIGHT">FedEx First Overnight</option>
+        <option value="INTERNATIONAL_ECONOMY">FedEx International Economy</option>
+        <option value="INTERNATIONAL_PRIORITY">FedEx International Priority</option>
+      </select>
+      <div class="error-text">Choose a service type.</div>
+    </div>
+
+    <div class="field" id="field-weight">
+      <label for="weight">Package weight <span class="hint">enter numeric value</span></label>
+      <div class="weight-row">
+        <input type="number" id="weight" class="weight-input" min="0" step="0.01" placeholder="e.g. 2.5" required />
+        <select id="weight_unit" class="weight-unit" required>
+          <option value="LB">lb</option>
+          <option value="KG">kg</option>
+        </select>
+      </div>
+      <div class="error-text">Enter a weight greater than 0.</div>
+    </div>
+
+    <div class="field" id="field-package_type">
+      <label for="package_type">Packaging type</label>
+      <select id="package_type" required>
+        <option value="" disabled selected>Select packaging</option>
+        <option value="YOUR_PACKAGING">Your packaging</option>
+        <option value="FEDEX_ENVELOPE">FedEx Envelope</option>
+        <option value="FEDEX_BOX">FedEx Box</option>
+        <option value="FEDEX_SMALL_BOX">FedEx Small Box</option>
+        <option value="FEDEX_MEDIUM_BOX">FedEx Medium Box</option>
+        <option value="FEDEX_LARGE_BOX">FedEx Large Box</option>
+        <option value="FEDEX_PAK">FedEx Pak</option>
+        <option value="FEDEX_TUBE">FedEx Tube</option>
+      </select>
+      <div class="error-text">Choose a packaging type.</div>
+    </div>
+
+    <button type="submit">Save shipment details</button>
+  </form>
+
+  <div class="status" id="statusMsg">Saved. Details are ready to send.</div>
+
+  <div class="output" id="output">
+    <div class="output-label">JSON payload</div>
+    <pre id="jsonOutput"></pre>
+    <button type="button" class="copy-btn" id="copyBtn">Copy JSON</button>
+  </div>
+</div>
+
+<script>
+  // Pick up order_id from the URL, e.g. widget.html?order_id=1042
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order_id');
+  if (orderId) {
+    document.getElementById('orderTag').style.display = 'inline-flex';
+    document.getElementById('orderIdValue').textContent = orderId;
+  }
+
+  const form = document.getElementById('shipmentForm');
+  const output = document.getElementById('output');
+  const jsonOutput = document.getElementById('jsonOutput');
+  const statusMsg = document.getElementById('statusMsg');
+  const copyBtn = document.getElementById('copyBtn');
+
+  function setInvalid(fieldId, invalid) {
+    const el = document.getElementById('field-' + fieldId);
+    if (el) el.classList.toggle('invalid', invalid);
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const service_type = document.getElementById('service_type').value;
+    const weight = document.getElementById('weight').value;
+    const weight_unit = document.getElementById('weight_unit').value;
+    const package_type = document.getElementById('package_type').value;
+
+    let valid = true;
+    setInvalid('service_type', !service_type);
+    setInvalid('weight', !(weight && parseFloat(weight) > 0));
+    setInvalid('package_type', !package_type);
+
+    if (!service_type || !(weight && parseFloat(weight) > 0) || !package_type) {
+      valid = false;
+    }
+
+    if (!valid) {
+      statusMsg.classList.remove('visible');
+      output.classList.remove('visible');
+      return;
+    }
+
+    const payload = {
+      order_id: orderId || null,
+      service_type: service_type,
+      weight: parseFloat(weight),
+      weight_unit: weight_unit,
+      package_type: package_type
+    };
+
+    jsonOutput.textContent = JSON.stringify(payload, null, 2);
+    output.classList.add('visible');
+    statusMsg.classList.add('visible');
+
+    // If this widget is embedded in an iframe, notify the parent page.
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'shipment_details', payload: payload }, '*');
+    }
+  });
+
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(jsonOutput.textContent).then(function () {
+      copyBtn.textContent = 'Copied';
+      setTimeout(function () { copyBtn.textContent = 'Copy JSON'; }, 1400);
+    });
+  });
+</script>
+
+</body>
+</html>
