@@ -311,19 +311,20 @@
     spinner.classList.add("visible");
     resultMessage.classList.remove("visible");
 
-    // 2. Call the Deluge function, sending pipe-delimited lists (one entry per package).
-    const req = {
-      functionname: "generatefedexshippinglabel1_1", // update to match your function's REST API name exactly
-      arguments: {
+    // 2. Call the Deluge function. Per Zoho's SDK, arguments must be JSON-stringified
+    // inside an "arguments" key — passing a plain object here causes INVALID_DATA errors.
+    const functionName = "generatefedexshippinglabel1_1"; // update to match your function's REST API name exactly
+    const reqData = {
+      arguments: JSON.stringify({
         order_id: currentOrderId,
         service_type: service_type,
         weights: weights.join("|"),
         weight_units: weightUnits.join("|"),
         package_types: packageTypes.join("|")
-      }
+      })
     };
 
-    ZOHO.CRM.FUNCTIONS.execute(req.functionname, req.arguments)
+    ZOHO.CRM.FUNCTIONS.execute(functionName, reqData)
       .then(function (response) {
         submitBtn.disabled = false;
         spinner.classList.remove("visible");
