@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Generate FedEx Label</title>
+<title>Generate FedEx Labels</title>
 <script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
 <style>
   :root {
@@ -28,17 +28,8 @@
     padding: 24px 26px;
   }
 
-  h1 {
-    font-size: 18px;
-    font-weight: 650;
-    margin: 0 0 4px;
-  }
-
-  .subtitle {
-    font-size: 13px;
-    color: var(--ink-soft);
-    margin: 0 0 20px;
-  }
+  h1 { font-size: 18px; font-weight: 650; margin: 0 0 4px; }
+  .subtitle { font-size: 13px; color: var(--ink-soft); margin: 0 0 20px; }
 
   .order-tag {
     display: inline-flex;
@@ -54,14 +45,9 @@
 
   .order-tag strong { color: var(--ink); font-weight: 600; }
 
-  form { display: flex; flex-direction: column; gap: 16px; }
+  form { display: flex; flex-direction: column; gap: 18px; }
 
-  .field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 
   select, input[type="number"] {
     width: 100%;
@@ -80,11 +66,62 @@
     box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
+  .packages-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .packages-header label { margin-bottom: 0; }
+
+  .add-package-btn {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .add-package-btn:hover { background: #e0deff; }
+
+  .package-row {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+  }
+
+  .package-row .package-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: none;
+  }
+
   .weight-row { display: flex; gap: 10px; }
   .weight-row .weight-input { flex: 2; }
   .weight-row .weight-unit { flex: 1; }
 
-  button {
+  .remove-package-btn {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    color: var(--error);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+
+  .remove-package-btn:hover { text-decoration: underline; }
+
+  button[type="submit"] {
     margin-top: 4px;
     background: var(--ink);
     color: #fff;
@@ -96,8 +133,8 @@
     cursor: pointer;
   }
 
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-  button:hover:not(:disabled) { background: #000; }
+  button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
+  button[type="submit"]:hover:not(:disabled) { background: #000; }
 
   .message {
     margin-top: 16px;
@@ -106,26 +143,21 @@
     border-radius: 8px;
     display: none;
     line-height: 1.5;
+    white-space: pre-line;
   }
 
   .message.visible { display: block; }
   .message.error { background: #fdeceb; color: var(--error); }
   .message.success { background: #eaf7ef; color: var(--success); }
 
-  .spinner {
-    display: none;
-    font-size: 13px;
-    color: var(--ink-soft);
-    margin-top: 12px;
-  }
-
+  .spinner { display: none; font-size: 13px; color: var(--ink-soft); margin-top: 12px; }
   .spinner.visible { display: block; }
 </style>
 </head>
 <body>
 
-  <h1>Generate FedEx shipping label</h1>
-  <p class="subtitle">Confirm service and package details, then generate the label and tracking number.</p>
+  <h1>Generate FedEx shipping labels</h1>
+  <p class="subtitle">Add one row per package. Each package gets its own tracking number and label.</p>
 
   <div class="order-tag" id="orderTag" style="display:none;">
     Order <strong id="orderIdValue"></strong>
@@ -133,7 +165,7 @@
 
   <form id="shipmentForm" novalidate>
     <div class="field">
-      <label for="service_type">FedEx service type</label>
+      <label for="service_type">FedEx service type <span style="font-weight:400;color:var(--ink-soft);">(applies to whole shipment)</span></label>
       <select id="service_type" required>
         <option value="" disabled selected>Select a service</option>
         <option value="FEDEX_GROUND">FedEx Ground</option>
@@ -150,43 +182,73 @@
     </div>
 
     <div class="field">
-      <label for="weight">Package weight</label>
-      <div class="weight-row">
-        <input type="number" id="weight" class="weight-input" min="0.01" step="0.01" placeholder="e.g. 2.5" required />
-        <select id="weight_unit" class="weight-unit" required>
-          <option value="LB">lb</option>
-          <option value="KG">kg</option>
-        </select>
+      <div class="packages-header">
+        <label>Packages</label>
+        <button type="button" class="add-package-btn" id="addPackageBtn">+ Add another package</button>
       </div>
+      <div id="packagesContainer"></div>
     </div>
 
-    <div class="field">
-      <label for="package_type">Packaging type</label>
-      <select id="package_type" required>
-        <option value="" disabled selected>Select packaging</option>
-        <option value="YOUR_PACKAGING">Your packaging</option>
-        <option value="FEDEX_ENVELOPE">FedEx Envelope</option>
-        <option value="FEDEX_BOX">FedEx Box</option>
-        <option value="FEDEX_SMALL_BOX">FedEx Small Box</option>
-        <option value="FEDEX_MEDIUM_BOX">FedEx Medium Box</option>
-        <option value="FEDEX_LARGE_BOX">FedEx Large Box</option>
-        <option value="FEDEX_PAK">FedEx Pak</option>
-        <option value="FEDEX_TUBE">FedEx Tube</option>
-      </select>
-    </div>
-
-    <button type="submit" id="submitBtn">Generate label</button>
-    <div class="spinner" id="spinner">Talking to FedEx&hellip; this can take a few seconds.</div>
+    <button type="submit" id="submitBtn">Generate labels</button>
+    <div class="spinner" id="spinner">Talking to FedEx&hellip; this can take a few seconds per package.</div>
   </form>
 
   <div class="message" id="resultMessage"></div>
 
 <script>
   let currentOrderId = null;
+  let packageCount = 0;
+
+  const packagesContainer = document.getElementById("packagesContainer");
+  const addPackageBtn = document.getElementById("addPackageBtn");
+
+  const PACKAGE_TYPES = [
+    ["YOUR_PACKAGING", "Your packaging"],
+    ["FEDEX_ENVELOPE", "FedEx Envelope"],
+    ["FEDEX_BOX", "FedEx Box"],
+    ["FEDEX_SMALL_BOX", "FedEx Small Box"],
+    ["FEDEX_MEDIUM_BOX", "FedEx Medium Box"],
+    ["FEDEX_LARGE_BOX", "FedEx Large Box"],
+    ["FEDEX_PAK", "FedEx Pak"],
+    ["FEDEX_TUBE", "FedEx Tube"]
+  ];
+
+  function addPackageRow() {
+    packageCount += 1;
+    const rowId = "pkg_" + packageCount;
+    const row = document.createElement("div");
+    row.className = "package-row";
+    row.dataset.rowId = rowId;
+
+    let packageTypeOptions = '<option value="" disabled selected>Select packaging</option>';
+    PACKAGE_TYPES.forEach(function (pt) {
+      packageTypeOptions += '<option value="' + pt[0] + '">' + pt[1] + "</option>";
+    });
+
+    row.innerHTML =
+      '<span class="package-label">Package ' + packageCount + '</span>' +
+      '<div class="weight-row">' +
+        '<input type="number" class="pkg-weight weight-input" min="0.01" step="0.01" placeholder="Weight, e.g. 2.5" required />' +
+        '<select class="pkg-weight-unit weight-unit" required>' +
+          '<option value="LB">lb</option>' +
+          '<option value="KG">kg</option>' +
+        "</select>" +
+      "</div>" +
+      '<select class="pkg-type" required>' + packageTypeOptions + "</select>" +
+      '<button type="button" class="remove-package-btn">Remove</button>';
+
+    row.querySelector(".remove-package-btn").addEventListener("click", function () {
+      row.remove();
+    });
+
+    packagesContainer.appendChild(row);
+  }
+
+  addPackageBtn.addEventListener("click", addPackageRow);
+  addPackageRow(); // start with one row
 
   // 1. Initialize the Zoho Widget SDK and read the record we were opened from.
   ZOHO.embeddedApp.on("PageLoad", function (data) {
-    // data.EntityId is the ID of the record the button was clicked on (the Order).
     currentOrderId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
     if (currentOrderId) {
       document.getElementById("orderTag").style.display = "inline-flex";
@@ -215,29 +277,49 @@
     }
 
     const service_type = document.getElementById("service_type").value;
-    const weight = document.getElementById("weight").value;
-    const weight_unit = document.getElementById("weight_unit").value;
-    const package_type = document.getElementById("package_type").value;
+    const rows = Array.from(packagesContainer.querySelectorAll(".package-row"));
 
-    if (!service_type || !weight || parseFloat(weight) <= 0 || !package_type) {
-      showMessage("Please fill in every field with a valid value.", "error");
+    if (!service_type) {
+      showMessage("Please select a FedEx service type.", "error");
       return;
+    }
+    if (rows.length === 0) {
+      showMessage("Add at least one package.", "error");
+      return;
+    }
+
+    const weights = [];
+    const weightUnits = [];
+    const packageTypes = [];
+
+    for (const row of rows) {
+      const weight = row.querySelector(".pkg-weight").value;
+      const weightUnit = row.querySelector(".pkg-weight-unit").value;
+      const packageType = row.querySelector(".pkg-type").value;
+
+      if (!weight || parseFloat(weight) <= 0 || !packageType) {
+        showMessage("Fill in weight and packaging type for every package.", "error");
+        return;
+      }
+
+      weights.push(weight);
+      weightUnits.push(weightUnit);
+      packageTypes.push(packageType);
     }
 
     submitBtn.disabled = true;
     spinner.classList.add("visible");
     resultMessage.classList.remove("visible");
 
-    // 2. Call your Deluge function directly through the SDK.
-    // "GenerateFedexShippingLabel1" must match the function's API name in Zoho.
+    // 2. Call the Deluge function, sending pipe-delimited lists (one entry per package).
     const req = {
-      functionname: "generatefedexshippinglabel1_1",
+      functionname: "generatefedexshippinglabelsmulti_1", // update to match your function's REST API name exactly
       arguments: {
         order_id: currentOrderId,
         service_type: service_type,
-        weight: parseFloat(weight),
-        weight_unit: weight_unit,
-        package_type: package_type
+        weights: weights.join("|"),
+        weight_units: weightUnits.join("|"),
+        package_types: packageTypes.join("|")
       }
     };
 
@@ -246,15 +328,12 @@
         submitBtn.disabled = false;
         spinner.classList.remove("visible");
 
-        // response.details.output holds whatever your Deluge "return" statement sent back.
         const output = response && response.details ? response.details.output : response;
 
         if (typeof output === "string" && output.toLowerCase().indexOf("error") !== -1) {
           showMessage(output, "error");
-        } else if (typeof output === "string" && output.toLowerCase().indexOf("already exist") !== -1) {
-          showMessage(output, "error");
         } else {
-          showMessage(output || "Label generated.", "success");
+          showMessage(output || "Labels generated.", "success");
         }
       })
       .catch(function (err) {
